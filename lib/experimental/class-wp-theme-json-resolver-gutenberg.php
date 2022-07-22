@@ -136,10 +136,36 @@ class WP_Theme_JSON_Resolver_Gutenberg extends WP_Theme_JSON_Resolver_6_1 {
 		return new WP_Theme_JSON_Gutenberg( $config, 'core' );
 	}
 
+	/**
+	 * Returns any plugin provided theme data from all plugins merged together.
+	 *
+	 * Note: The current merge strategy merges in order of plugins returned by
+	 * `wp_get_active_and_valid_plugins()`. This means the data from the last
+	 * plugin in the list will override any equivalent properties from those
+	 * earlier in the list.
+	 */
 	public static function get_plugin_theme_data() {
 		if ( null === static::$plugins ) {
-			$plugin_registry = WP_Plugin_Theme_Data_Registry::get_instance();
-			static::$plugins = $plugin_registry->get_theme_data();
+			$plugins_data        = array();
+			$active_plugin_paths = wp_get_active_and_valid_plugins();
+			foreach ( $active_plugin_paths as $path ) {
+				$config = static::read_json_file( $path );
+				if ( ! empty( $config ) ) {
+					$plugins_data[ $path ] = $config;
+				}
+			}
+			// have configs from plugins, now let's register and merge.
+			$plugin_json = new WP_Theme_JSON_Gutenberg();
+			foreach ( $plugins_data as $plugin_path => $plugin_config ) {
+				$plugin_data = get_plugin_data( $plugin_path, false, false );
+				if ( isset( $plugin_data['TextDomain'] ) ) {
+					$plugin_config = static::translate( $plugin_config, $plugin_data['TextDomain'] );
+				}
+				// TODO, this is where we could potentially introduce different merge
+				// strategies for plugin provided data.
+				$plugin_json->merge( new WP_Theme_JSON_Gutenberg( $plugin_config ) );
+			}
+			static::$plugins = $plugin_json;
 		}
 		return static::$plugins;
 	}
@@ -196,8 +222,10 @@ class WP_Theme_JSON_Resolver_Gutenberg extends WP_Theme_JSON_Resolver_6_1 {
 		$result->merge( static::get_core_data() );
 		$result->merge( static::get_block_data() );
 		$result->merge( static::get_theme_data() );
-		// TODO merge in plugin data.
-		// $result->merge( static::get_plugin_theme_data() );.
+
+		// TODO: This is where we could potentially introduce new strategies for
+		// merging plugin provided data.
+		$result->merge( static::get_plugin_theme_data() );
 
 		if ( 'custom' === $origin ) {
 			$result->merge( static::get_user_data() );
