@@ -235,4 +235,22 @@ class WP_Theme_JSON_Resolver_Gutenberg extends WP_Theme_JSON_Resolver_6_1 {
 
 		return $result;
 	}
+
+	/**
+	 * Cleans the cached data so it can be recalculated.
+	 *
+	 * @since 5.8.0
+	 * @since 5.9.0 Added the `$user`, `$user_custom_post_type_id`,
+	 *              and `$i18n_schema` variables to reset.
+	 * @since 6.1.0 Added the `$plugins` variables to reset.
+	 */
+	public static function clean_cached_data() {
+		static::$core                     = null;
+		static::$theme                    = null;
+		static::$user                     = null;
+		static::$user_custom_post_type_id = null;
+		static::$theme_has_support        = null;
+		static::$i18n_schema              = null;
+		static::$plugins                  = null;
+	}
 }
