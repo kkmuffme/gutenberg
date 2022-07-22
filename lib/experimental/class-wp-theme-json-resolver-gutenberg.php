@@ -157,9 +157,9 @@ class WP_Theme_JSON_Resolver_Gutenberg extends WP_Theme_JSON_Resolver_6_1 {
 			// have configs from plugins, now let's register and merge.
 			$plugin_json = new WP_Theme_JSON_Gutenberg();
 			foreach ( $plugins_data as $plugin_path => $plugin_config ) {
-				$plugin_data = get_plugin_data( $plugin_path, false, false );
-				if ( isset( $plugin_data['TextDomain'] ) ) {
-					$plugin_config = static::translate( $plugin_config, $plugin_data['TextDomain'] );
+				$plugin_meta_data = get_plugin_data( $plugin_path, false, false );
+				if ( isset( $plugin_meta_data['TextDomain'] ) ) {
+					$plugin_config = static::translate( $plugin_config, $plugin_meta_data['TextDomain'] );
 				}
 				// TODO, this is where we could potentially introduce different merge
 				// strategies for plugin provided data.
